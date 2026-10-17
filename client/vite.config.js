@@ -8,9 +8,10 @@ export default defineConfig({
   cacheDir: resolve(tmpdir(), 'hospital-management-system-vite-cache'),
   server: {
     port: 5173,
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.API_PROXY_TARGET || 'http://localhost:5000',
         changeOrigin: true
       }
     }

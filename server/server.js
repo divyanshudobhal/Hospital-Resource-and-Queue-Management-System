@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const pool = require('./db');
@@ -32,9 +34,57 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running', timestamp: new Date().toISOString() });
 });
 
+// In production, serve the Vite build from the same origin as the API.
+const staticDir = process.env.STATIC_DIR || path.join(__dirname, 'public');
+const indexFile = path.join(staticDir, 'index.html');
+if (fs.existsSync(indexFile)) {
+  app.use(express.static(staticDir));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(indexFile);
+  });
+}
+
 // --------------- Seed Demo Data ---------------
 async function seedDatabase() {
   try {
+    const demoPatientNames = [
+      ['patient1', 'pulkit', 'Pulkit'],
+      ['patient2', 'swastika', 'Swastika'],
+      ['patient3', 'srishti', 'Srishti']
+    ];
+
+    // Rename seeded accounts without changing their IDs or existing appointments.
+    for (const [oldUsername, username, name] of demoPatientNames) {
+      const [oldUsers] = await pool.query('SELECT id FROM users WHERE username = ?', [oldUsername]);
+      if (oldUsers.length === 0) continue;
+      const [newUsers] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+      if (newUsers.length > 0 && newUsers[0].id !== oldUsers[0].id) {
+        console.warn(`  ! Demo username ${username} already exists; keeping ${oldUsername}.`);
+        continue;
+      }
+      await pool.query('UPDATE users SET username = ? WHERE id = ?', [username, oldUsers[0].id]);
+      await pool.query('UPDATE patients SET name = ? WHERE user_id = ?', [name, oldUsers[0].id]);
+    }
+
+    const demoDoctorAccounts = [
+      ['dr.smith', 'dr.aarav', 'Dr. Aarav Sharma'],
+      ['dr.jones', 'dr.priya', 'Dr. Priya Iyer']
+    ];
+
+    // Give the seeded doctor accounts Indian names without changing their IDs or appointments.
+    for (const [oldUsername, username, name] of demoDoctorAccounts) {
+      const [oldUsers] = await pool.query('SELECT id FROM users WHERE username = ?', [oldUsername]);
+      if (oldUsers.length === 0) continue;
+      const [newUsers] = await pool.query('SELECT id FROM users WHERE username = ?', [username]);
+      if (newUsers.length > 0 && newUsers[0].id !== oldUsers[0].id) {
+        console.warn(`  ! Demo username ${username} already exists; keeping ${oldUsername}.`);
+        continue;
+      }
+      await pool.query('UPDATE users SET username = ? WHERE id = ?', [username, oldUsers[0].id]);
+      await pool.query('UPDATE doctors SET name = ? WHERE user_id = ?', [name, oldUsers[0].id]);
+    }
+
     const [users] = await pool.query('SELECT COUNT(*) as count FROM users');
     if (users[0].count > 0) {
       console.log('  i  Database already has data — skipping seed.');
@@ -47,17 +97,17 @@ async function seedDatabase() {
     // Insert doctor users
     const [r1] = await pool.query(
       `INSERT INTO users (username, password_hash, role) VALUES
-       ('dr.smith', ?, 'doctor'),
-       ('dr.jones', ?, 'doctor')`,
+       ('dr.aarav', ?, 'doctor'),
+       ('dr.priya', ?, 'doctor')`,
       [hash, hash]
     );
 
     // Insert patient users
     const [r2] = await pool.query(
       `INSERT INTO users (username, password_hash, role) VALUES
-       ('patient1', ?, 'patient'),
-       ('patient2', ?, 'patient'),
-       ('patient3', ?, 'patient')`,
+       ('pulkit', ?, 'patient'),
+       ('swastika', ?, 'patient'),
+       ('srishti', ?, 'patient')`,
       [hash, hash, hash]
     );
 
@@ -68,18 +118,18 @@ async function seedDatabase() {
     // Doctor profiles
     await pool.query(
       `INSERT INTO doctors (user_id, name, specialization, phone) VALUES
-       (?, 'Dr. Sarah Smith', 'General Medicine', '555-0101'),
-       (?, 'Dr. Michael Jones', 'Cardiology', '555-0102')`,
-      [uid('dr.smith'), uid('dr.jones')]
+       (?, 'Dr. Aarav Sharma', 'General Medicine', '555-0101'),
+       (?, 'Dr. Priya Iyer', 'Cardiology', '555-0102')`,
+      [uid('dr.aarav'), uid('dr.priya')]
     );
 
     // Patient profiles
     await pool.query(
       `INSERT INTO patients (user_id, name, age, gender, phone, blood_group) VALUES
-       (?, 'Alice Johnson', 30, 'Female', '555-0201', 'A+'),
-       (?, 'Bob Williams', 45, 'Male', '555-0202', 'O+'),
-       (?, 'Charlie Brown', 28, 'Male', '555-0203', 'B+')`,
-      [uid('patient1'), uid('patient2'), uid('patient3')]
+       (?, 'Pulkit', 30, 'Male', '555-0201', 'A+'),
+       (?, 'Swastika', 45, 'Female', '555-0202', 'O+'),
+       (?, 'Srishti', 28, 'Female', '555-0203', 'B+')`,
+      [uid('pulkit'), uid('swastika'), uid('srishti')]
     );
 
     // Sample appointments for today
@@ -101,14 +151,29 @@ async function seedDatabase() {
     console.log('  ┌──────────────────────────────────────┐');
     console.log('  │  Demo Accounts (password: password123)│');
     console.log('  ├──────────────────────────────────────┤');
-    console.log('  │  Doctor:  dr.smith                   │');
-    console.log('  │  Doctor:  dr.jones                   │');
-    console.log('  │  Patient: patient1                   │');
-    console.log('  │  Patient: patient2                   │');
-    console.log('  │  Patient: patient3                   │');
+    console.log('  │  Doctor:  dr.aarav                   │');
+    console.log('  │  Doctor:  dr.priya                   │');
+    console.log('  │  Patient: pulkit                     │');
+    console.log('  │  Patient: swastika                   │');
+    console.log('  │  Patient: srishti                    │');
     console.log('  └──────────────────────────────────────┘');
   } catch (err) {
     console.error('  ✗  Seed error:', err.message);
+  }
+}
+
+async function waitForDatabase(retries = 20, delayMs = 2000) {
+  for (let attempt = 1; attempt <= retries; attempt += 1) {
+    try {
+      await pool.query('SELECT 1');
+      return true;
+    } catch (err) {
+      if (attempt === retries) {
+        throw err;
+      }
+      console.warn(`  ! Database not ready yet (attempt ${attempt}/${retries}). Retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
   }
 }
 
@@ -122,9 +187,9 @@ app.listen(PORT, async () => {
   console.log(`  Started : ${new Date().toLocaleString()}`);
   console.log('');
 
-  // Test DB connection
+  // Test DB connection with retry loop to handle startup races in Docker Compose.
   try {
-    await pool.query('SELECT 1');
+    await waitForDatabase();
     console.log('  ✓  MySQL connected');
     await seedDatabase();
   } catch (err) {
@@ -135,6 +200,7 @@ app.listen(PORT, async () => {
   console.log('');
   console.log('  API Endpoints:');
   console.log('  POST   /api/auth/login');
+  console.log('  POST   /api/auth/signup');
   console.log('  GET    /api/patients');
   console.log('  GET    /api/patients/profile');
   console.log('  GET    /api/appointments');

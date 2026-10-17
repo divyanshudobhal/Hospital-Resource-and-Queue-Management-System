@@ -50,35 +50,37 @@ textarea {
 .app-navbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 30;
   width: 100%;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.96);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(14px);
+  box-shadow: 0 4px 18px rgba(20, 48, 44, 0.045);
 }
 
 .navbar-inner {
+  position: relative;
   max-width: 1240px;
-  min-height: 68px;
-  padding: 0 1.25rem;
+  min-height: 76px;
+  padding: 0 1.5rem;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .menu-toggle {
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  background: var(--white);
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d7e5e2;
+  border-radius: 13px;
+  background: #f6faf9;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
 }
@@ -113,33 +115,40 @@ textarea {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 11;
+  z-index: 0;
   border: 0;
-  background: rgba(18, 35, 33, 0.32);
+  background: rgba(18, 35, 33, 0.2);
   animation: backdrop-in 0.2s ease-out;
 }
 
 .navigation-drawer {
+  display: none;
   position: fixed;
-  z-index: 12;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  display: flex;
+  z-index: 3;
+  top: 84px;
+  right: max(1rem, calc((100vw - 1240px) / 2 + 1.5rem));
+  bottom: auto;
+  left: auto;
   flex-direction: column;
-  width: min(320px, calc(100vw - 52px));
-  padding: 1.35rem;
-  border-right: 1px solid var(--border);
+  width: min(360px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 100px);
+  overflow-y: auto;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
   background: var(--white);
-  box-shadow: 16px 0 45px rgba(20, 48, 44, 0.12);
-  transform: translateX(-105%);
+  box-shadow: 0 22px 60px rgba(20, 48, 44, 0.2);
+  transform: translateY(-8px) scale(0.98);
   visibility: hidden;
-  transition: transform 0.25s ease, visibility 0.25s;
+  opacity: 0;
+  transform-origin: top right;
+  transition: transform 0.2s ease, opacity 0.2s ease, visibility 0.2s;
 }
 
 .navigation-drawer-open {
-  transform: translateX(0);
+  transform: translateY(0) scale(1);
   visibility: visible;
+  opacity: 1;
 }
 
 .drawer-heading {
@@ -297,7 +306,67 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  border: 1px solid #edf2f1;
+  border-radius: 15px;
+  background: #f7faf9;
+}
+
+.navbar-desktop-links .drawer-link {
+  width: auto;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 11px;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.navbar-desktop-links .drawer-link:hover,
+.navbar-desktop-links .drawer-link-active {
+  color: var(--primary-dark);
+}
+
+.navbar-desktop-links .drawer-link-icon {
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.navbar-desktop-links .navbar-primary-link {
+  background: var(--primary);
+  color: var(--white);
+  padding-inline: 1rem;
+}
+
+.navbar-desktop-links .navbar-primary-link .drawer-link-icon {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--white);
+}
+
+.navbar-desktop-links .navbar-primary-link:hover {
+  background: var(--primary-dark);
+  color: var(--white);
+}
+
+.navbar-create-account {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.95rem;
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--white);
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.navbar-create-account:hover {
+  background: var(--primary-dark);
+  color: var(--white);
 }
 
 .navbar-link {
@@ -324,7 +393,7 @@ textarea {
 .navbar-account {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.7rem;
   flex-shrink: 0;
 }
 
@@ -350,8 +419,17 @@ textarea {
 }
 
 .navbar-logout {
-  margin-left: 0.45rem;
-  padding: 0.45rem 0.8rem;
+  margin-left: 0.2rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-muted);
+}
+
+.navbar-logout:hover {
+  border-color: #bdd8d3;
+  background: var(--primary-light);
+  color: var(--primary-dark);
 }
 
 .navbar-portal-label {
@@ -395,6 +473,22 @@ textarea {
   width: 100%;
   max-width: 460px;
   box-shadow: 0 24px 70px rgba(24, 62, 57, 0.1);
+}
+
+.signup-card {
+  max-width: 620px;
+}
+
+.auth-switch {
+  margin-top: 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.auth-switch a {
+  margin-left: 0.25rem;
+  font-weight: 700;
 }
 
 .login-header {
@@ -469,6 +563,20 @@ textarea {
   margin-bottom: 0.35rem;
   font-size: 0.9rem;
   color: var(--text);
+}
+
+.field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.optional-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 400;
 }
 
 .form-group input,
@@ -994,7 +1102,45 @@ textarea {
 }
 
 /* ========== RESPONSIVE ========== */
+@media (max-width: 900px) {
+  .navbar-inner {
+    min-height: 68px;
+  }
+
+  .navbar-desktop-links,
+  .navbar-account > .account-avatar,
+  .navbar-account > .account-details,
+  .navbar-account > .navbar-logout {
+    display: none;
+  }
+
+  .menu-toggle,
+  .navigation-drawer {
+    display: flex;
+  }
+}
+
 @media (max-width: 768px) {
+  .navbar-inner {
+    min-height: 64px;
+  }
+
+  .navbar-desktop-links,
+  .navbar-account > .account-avatar,
+  .navbar-account > .account-details,
+  .navbar-account > .navbar-logout,
+  .navbar-create-account {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .navigation-drawer {
+    display: flex;
+  }
+
   .dashboard {
     padding-top: 1.1rem;
   }
@@ -1056,12 +1202,7 @@ textarea {
     display: none;
   }
 
-  .navbar-account {
-    gap: 0.4rem;
-  }
-
-  .navbar-logout {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
+  .signup-card {
+    padding: 1.25rem;
   }
 }

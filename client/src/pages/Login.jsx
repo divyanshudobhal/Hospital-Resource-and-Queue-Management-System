@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar';
 
 export default function Login() {
@@ -89,11 +89,13 @@ export default function Login() {
             </button>
           </form>
 
+          <p className="auth-switch">New to CarePoint?<Link to="/signup">Create a patient account</Link></p>
+
           <div className="demo-info">
             <p><strong>Demo Accounts</strong> (password: <code>password123</code>)</p>
             <div className="demo-accounts">
-              <span className="demo-role">👨‍⚕️ Doctor:</span> dr.smith &nbsp;|&nbsp; dr.jones<br />
-              <span className="demo-role">🧑 Patient:</span> patient1 &nbsp;|&nbsp; patient2 &nbsp;|&nbsp; patient3
+              <span className="demo-role">Doctors:</span> dr.aarav (Dr. Aarav Sharma) &nbsp;|&nbsp; dr.priya (Dr. Priya Iyer)<br />
+              <span className="demo-role">Patients:</span> pulkit &nbsp;|&nbsp; swastika &nbsp;|&nbsp; srishti
             </div>
           </div>
         </div>

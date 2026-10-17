@@ -106,18 +106,25 @@ npm run dev
 
 Open **http://localhost:5173** in your browser.
 
-### Step 4: Login with Demo Accounts
+---
+
+## 🌐 Hosting
+
+For the complete step-by-step instructions to run the app locally, share a temporary phone link, or host it with a stable Cloudflare domain, see [README_HOSTING.md](README_HOSTING.md).
+
+### Demo Accounts
 
 | Role | Username | Password |
 |------|----------|----------|
-| Doctor | `dr.smith` | `password123` |
-| Doctor | `dr.jones` | `password123` |
-| Patient | `patient1` | `password123` |
-| Patient | `patient2` | `password123` |
-| Patient | `patient3` | `password123` |
+| Doctor | `dr.aarav` (Dr. Aarav Sharma) | `password123` |
+| Doctor | `dr.priya` (Dr. Priya Iyer) | `password123` |
+| Patient | `pulkit` | `password123` |
+| Patient | `swastika` | `password123` |
+| Patient | `srishti` | `password123` |
+
+Patients can also create their own account from the **Create patient account** link on the sign-in page.
 
 ---
-
 ## 📁 Project Structure
 
 ```
@@ -227,3 +234,6 @@ This is an **educational project** for demonstrating OS and DBMS concepts. The s
 ## 📄 License
 
 This project is for educational purposes only.
+
+docker compose --profile tunnel up -d --force-recreate cloudflared
+docker compose logs -f cloudflared

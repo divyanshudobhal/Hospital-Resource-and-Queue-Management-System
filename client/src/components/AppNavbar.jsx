@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function AppNavbar({
-  role,
-  username,
-  activeSection,
-  onSectionChange,
-  onLogout
-}) {
+export default function AppNavbar({ role, username, activeSection, onSectionChange, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const isDoctor = role === 'doctor';
   const isPatient = role === 'patient';
@@ -26,8 +20,56 @@ export default function AppNavbar({
   }, [isOpen]);
 
   function selectSection(section) {
-    onSectionChange(section);
+    onSectionChange?.(section);
     setIsOpen(false);
+  }
+
+  function sectionLink(section, label, icon) {
+    const active = activeSection === section;
+    return (
+      <button
+        key={section}
+        className={`drawer-link ${active ? 'drawer-link-active' : ''}`}
+        onClick={() => selectSection(section)}
+        aria-current={active ? 'page' : undefined}
+      >
+        <span className="drawer-link-icon" aria-hidden="true">{icon}</span>
+        {label}
+      </button>
+    );
+  }
+
+  function patientLink(id, label, icon) {
+    return (
+      <a key={id} className="drawer-link" href={`#${id}`} onClick={() => setIsOpen(false)}>
+        <span className="drawer-link-icon" aria-hidden="true">{icon}</span>
+        {label}
+      </a>
+    );
+  }
+
+  function navigationItems() {
+    if (isDoctor) {
+      return <>
+        {sectionLink('dashboard', 'Overview', '⌂')}
+        {sectionLink('scheduling', 'OS Scheduling', '◷')}
+      </>;
+    }
+    if (isPatient) {
+      return <>
+        {patientLink('profile', 'My profile', '◎')}
+        {patientLink('booking', 'Book visit', '＋')}
+        {patientLink('appointments', 'Appointments', '▤')}
+      </>;
+    }
+    return <>
+      <Link className="drawer-link" to="/" onClick={() => setIsOpen(false)}>
+        <span className="drawer-link-icon" aria-hidden="true">→</span>Sign in
+      </Link>
+      <Link className="drawer-link navbar-primary-link" to="/signup" onClick={() => setIsOpen(false)}>
+        <span className="drawer-link-icon" aria-hidden="true">＋</span>Create patient account
+      </Link>
+    </>;
   }
 
   return (
@@ -41,26 +83,33 @@ export default function AppNavbar({
           </span>
         </Link>
 
-        <button
-          className={`menu-toggle ${isOpen ? 'menu-toggle-open' : ''}`}
-          type="button"
-          aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
-          aria-expanded={isOpen}
-          aria-controls="app-navigation-drawer"
-          onClick={() => setIsOpen((open) => !open)}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+        <nav className="navbar-links navbar-desktop-links" aria-label="Main navigation">
+          {navigationItems()}
+        </nav>
+
+        <div className="navbar-account">
+          {role && <>
+            <span className="account-avatar" aria-hidden="true">{initials}</span>
+            <span className="account-details">
+              <strong>{username || 'User'}</strong>
+              <small>{isDoctor ? 'Doctor account' : 'Patient account'}</small>
+            </span>
+            <button className="btn btn-secondary navbar-logout" onClick={onLogout}>Sign out</button>
+          </>}
+          <button
+            className={`menu-toggle ${isOpen ? 'menu-toggle-open' : ''}`}
+            type="button"
+            aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isOpen}
+            aria-controls="app-navigation-drawer"
+            onClick={() => setIsOpen((open) => !open)}
+          >
+            <span /><span /><span />
+          </button>
+        </div>
       </div>
-      {isOpen && (
-        <button
-          className="drawer-backdrop"
-          aria-label="Close navigation menu"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+
+      {isOpen && <button className="drawer-backdrop" aria-label="Close navigation menu" onClick={() => setIsOpen(false)} />}
       <aside
         id="app-navigation-drawer"
         className={`navigation-drawer ${isOpen ? 'navigation-drawer-open' : ''}`}
@@ -70,80 +119,22 @@ export default function AppNavbar({
       >
         <div className="drawer-heading">
           <span className="eyebrow">{role ? `${role} MENU` : 'WELCOME'}</span>
-          <button
-            className="drawer-close"
-            type="button"
-            aria-label="Close navigation menu"
-            onClick={() => setIsOpen(false)}
-          >
-            &times;
-          </button>
+          <button className="drawer-close" type="button" aria-label="Close navigation menu" onClick={() => setIsOpen(false)}>&times;</button>
         </div>
-
         {role && (
           <div className="drawer-user">
             <span className="account-avatar" aria-hidden="true">{initials}</span>
             <span className="account-details">
               <strong>{username || 'User'}</strong>
-              <small>{role === 'doctor' ? 'Doctor account' : 'Patient account'}</small>
+              <small>{isDoctor ? 'Doctor account' : 'Patient account'}</small>
             </span>
           </div>
         )}
-
-        <nav className="drawer-links" aria-label="Main navigation">
-          {isDoctor && (
-            <>
-              <button
-                className={`drawer-link ${activeSection === 'dashboard' ? 'drawer-link-active' : ''}`}
-                onClick={() => selectSection('dashboard')}
-                aria-current={activeSection === 'dashboard' ? 'page' : undefined}
-              >
-                <span className="drawer-link-icon" aria-hidden="true">⌂</span>
-                Overview
-              </button>
-              <button
-                className={`drawer-link ${activeSection === 'scheduling' ? 'drawer-link-active' : ''}`}
-                onClick={() => selectSection('scheduling')}
-                aria-current={activeSection === 'scheduling' ? 'page' : undefined}
-              >
-                <span className="drawer-link-icon" aria-hidden="true">◷</span>
-                OS Scheduling
-              </button>
-            </>
-          )}
-          {isPatient && (
-            <>
-              <a className="drawer-link" href="#profile" onClick={() => setIsOpen(false)}>
-                <span className="drawer-link-icon" aria-hidden="true">◎</span>
-                My profile
-              </a>
-              <a className="drawer-link" href="#booking" onClick={() => setIsOpen(false)}>
-                <span className="drawer-link-icon" aria-hidden="true">＋</span>
-                Book visit
-              </a>
-              <a className="drawer-link" href="#appointments" onClick={() => setIsOpen(false)}>
-                <span className="drawer-link-icon" aria-hidden="true">▤</span>
-                Appointments
-              </a>
-            </>
-          )}
-          {!role && (
-            <a className="drawer-link" href="#login" onClick={() => setIsOpen(false)}>
-              <span className="drawer-link-icon" aria-hidden="true">→</span>
-              Sign in
-            </a>
-          )}
-        </nav>
-
+        <nav className="drawer-links" aria-label="Main navigation">{navigationItems()}</nav>
         <div className="drawer-footer">
-          {role ? (
-            <button className="drawer-link drawer-signout" onClick={onLogout}>
-              <span className="drawer-link-icon" aria-hidden="true">↪</span>
-              Sign out
-            </button>
-          ) : (
-            <span className="drawer-note">Patient &amp; doctor portal</span>
-          )}
+          {role
+            ? <button className="drawer-link drawer-signout" onClick={() => { setIsOpen(false); onLogout?.(); }}><span className="drawer-link-icon" aria-hidden="true">↪</span>Sign out</button>
+            : <span className="drawer-note">Patient &amp; doctor portal</span>}
         </div>
       </aside>
     </header>

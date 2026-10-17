@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+!deploy/hosting.env.example
+**/node_modules/
+client/dist/
