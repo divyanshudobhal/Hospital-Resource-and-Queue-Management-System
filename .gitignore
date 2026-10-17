@@ -1,6 +1,6 @@
-build/
-*.exe
-*.o
-*.obj
 .env
-config/config.ini
+.env.*
+!.env.example
+!deploy/hosting.env.example
+**/node_modules/
+client/dist/
