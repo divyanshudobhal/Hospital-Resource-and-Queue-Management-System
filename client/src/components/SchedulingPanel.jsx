@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import CSchedulingRunner from './CSchedulingRunner';
 /* ===== SCHEDULING ALGORITHMS ===== */
 
 // FCFS — First Come First Serve
@@ -339,6 +339,8 @@ export default function SchedulingPanel({ appointments = [] }) {
           </table>
         </div>
       </div>
+   <CSchedulingRunner />
     </div>
+    
   );
 }

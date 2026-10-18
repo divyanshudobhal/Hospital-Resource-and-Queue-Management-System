@@ -3,6 +3,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const osSchedulingRoutes = require('./routes/osScheduling');
 require('dotenv').config();
 
 const pool = require('./db');
@@ -16,6 +17,7 @@ const PORT = process.env.PORT || 5000;
 // --------------- Middleware ---------------
 app.use(cors());
 app.use(express.json());
+app.use('/api/os-scheduling', osSchedulingRoutes);
 
 // Request logger — prints every API call in the terminal
 app.use((req, res, next) => {

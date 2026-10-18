@@ -237,3 +237,97 @@ This project is for educational purposes only.
 
 docker compose --profile tunnel up -d --force-recreate cloudflared
 docker compose logs -f cloudflared
+
+# update 18/10/2026
+## Operating System (OS) Module
+
+The Hospital Resource and Queue Management System demonstrates core Operating System concepts through hospital resource management and process scheduling simulations.
+
+### 1. CPU Scheduling Algorithms in C
+
+Implemented and tested two CPU scheduling algorithms in C:
+
+- **First Come First Serve (FCFS):** Processes are scheduled based on arrival time.
+- **Non-Preemptive Priority Scheduling:** The process with the highest priority among the waiting processes executes first. A lower priority number indicates higher priority.
+
+**Scheduling metrics calculated:**
+- Completion Time (CT)
+- Waiting Time (WT)
+- Turnaround Time (TAT)
+- Average Waiting Time
+- Average Turnaround Time
+- Gantt execution order
+
+**Source files:**
+- `os_engine/fcfs.c`
+- `os_engine/non_preemptive_priority.c`
+
+### 2. Resource Allocation Simulation
+
+The C++ resource simulator models hospital resources such as general beds, ICU beds, and ventilators. It processes allocation requests, checks resource availability, denies requests when insufficient resources are available, and supports resource release.
+
+Source file: `os_engine/resource_simulator.cpp`
+
+### 3. Process Synchronization
+
+The synchronization module demonstrates how mutexes and semaphores coordinate concurrent patient requests for limited ICU beds.
+
+Source files:
+- `os_engine/resource_sync.cpp`
+- `os_engine/semaphore_sim.cpp`
+
+### 4. Scheduling API Integration
+
+The Node.js backend exposes API endpoints that execute the compiled C scheduling programs and return their output to the client.
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/os-scheduling/fcfs` | Executes the C FCFS scheduler |
+| POST | `/api/os-scheduling/priority` | Executes the C non-preemptive Priority scheduler |
+
+Backend route: `server/routes/osScheduling.js`
+
+### Technology Stack
+
+- **C:** FCFS and Non-Preemptive Priority Scheduling
+- **C++:** Resource allocation and synchronization simulations
+- **React.js:** Frontend interface
+- **Node.js and Express.js:** Backend API
+- **MySQL:** Persistent application data
+
+### Compile and Run the C Scheduling Programs
+
+Open an MSYS2 UCRT64 terminal and navigate to the `os_engine` directory.
+
+Compile FCFS:
+
+```bash
+gcc -std=c11 -Wall -Wextra fcfs.c -o fcfs.exe
+```
+
+Run FCFS:
+
+```bash
+./fcfs.exe
+```
+
+Compile Non-Preemptive Priority:
+
+```bash
+gcc -std=c11 -Wall -Wextra non_preemptive_priority.c -o priority.exe
+```
+
+Run Non-Preemptive Priority:
+
+```bash
+./priority.exe
+```
+
+Both programs accept process details interactively and display scheduling metrics and execution order.
+
+### Verification Status
+
+- FCFS C program: compiled and tested.
+- Non-Preemptive Priority C program: compiled and tested with multiple processes and different arrival times.
+- Scheduling API endpoints: tested successfully using `curl`.
+- React integration of the C scheduling runner: pending browser verification.
