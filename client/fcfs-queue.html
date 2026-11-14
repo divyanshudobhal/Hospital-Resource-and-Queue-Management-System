@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hospital - FCFS</title>
+<style>
+body{font-family:'Segoe UI';background:#e3f2fd;margin:0;padding:20px}
+.header{background:#1976d2;color:white;padding:18px;border-radius:12px;text-align:center;font-size:22px;font-weight:bold}
+.box{background:white;padding:18px;border-radius:12px;margin-top:15px;box-shadow:0 4px 12px #ccc}
+input{padding:10px;margin:5px;border-radius:8px;border:1px solid #ccc;width:170px}
+button{padding:10px 18px;border:none;border-radius:8px;color:white;font-weight:bold;cursor:pointer}
+.add{background:#2ecc71} .serve{background:#ff9800} .report{background:#9b59b6}
+.flex{display:flex;gap:15px}
+.list{flex:1;background:#f9f9f9;padding:12px;border-radius:10px;min-height:100px}
+.status{background:#2c3e50;color:white;padding:12px;border-radius:10px;margin-top:15px;text-align:center}
+.gantt{background:white;padding:12px;border-radius:10px;margin-top:15px;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="header">🏥 HOSPITAL RESOURCE & QUEUE MANAGEMENT - FCFS</div>
+
+<div class="box">
+<input id="name" placeholder="Patient Name">
+<input id="age" placeholder="Age">
+<input id="problem" placeholder="Problem">
+<button class="add" onclick="addP()">ADD PATIENT</button>
+</div>
+
+<div class="flex">
+<div class="list"><b>Waiting Queue (FCFS)</b><div id="queue"></div></div>
+<div class="list"><b>Served Patients</b><div id="served"></div></div>
+</div>
+
+<div class="status" id="status">Doctors: Dr. Sharma | Dr. Verma | Beds: 20 / 20 | In Queue: 0 | Served: 0</div>
+<div class="gantt">Gantt Chart: <span id="gantt"></span></div>
+
+<div style="text-align:center;margin-top:15px">
+<button class="serve" onclick="serveP()">SERVE NEXT PATIENT (FCFS)</button>
+<button class="report" onclick="showReport()">SHOW REPORT</button>
+</div>
+
+<script>
+let queue=[], served=0, beds=20, token=1, gantt="";
+function addP(){
+  let n=document.getElementById('name').value;
+  let a=document.getElementById('age').value;
+  let p=document.getElementById('problem').value;
+  if(!n){alert('Enter name!');return;}
+  if(!a){alert('Enter age!');return;}
+  if(!p){alert('Enter problem!');return;}
+  queue.push(`Token ${token++} - ${n}`);
+  document.getElementById('name').value='';
+  document.getElementById('age').value='';
+  document.getElementById('problem').value='';
+  update();
+}
+function serveP(){
+  if(queue.length==0){alert('Queue Empty!');return;}
+  let p=queue.shift();
+  document.getElementById('served').innerHTML+=p+"<br>";
+  beds--; served++; gantt+=` | P${served} | `;
+  update();
+}
+function update(){
+  document.getElementById('queue').innerHTML=queue.join('<br>');
+  document.getElementById('gantt').innerText=gantt;
+  document.getElementById('status').innerText=`Doctors: Dr. Sharma | Dr. Verma | Beds: ${beds} / 20 | In Queue: ${queue.length} | Served: ${served}`;
+}
+function showReport(){ alert(`Total Served: ${served}\nStill Waiting: ${queue.length}\nBeds Left: ${beds}`); }
+</script>
+</body>
+</html>
