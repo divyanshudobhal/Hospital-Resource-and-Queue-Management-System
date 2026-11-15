@@ -5,7 +5,9 @@ export default function AppNavbar({ role, username, activeSection, onSectionChan
   const [isOpen, setIsOpen] = useState(false);
   const isDoctor = role === 'doctor';
   const isPatient = role === 'patient';
-  const homePath = isDoctor ? '/doctor-dashboard' : '/patient-dashboard';
+  const isAdmin = role === 'admin';
+  const homePath = isDoctor ? '/doctor-dashboard' : isAdmin ? '/admin-dashboard' : '/patient-dashboard';
+  const accountLabel = isDoctor ? 'Doctor account' : isAdmin ? 'Administrator account' : 'Patient account';
   const initials = username ? username.slice(0, 2).toUpperCase() : 'U';
 
   useEffect(() => {
@@ -53,6 +55,7 @@ export default function AppNavbar({ role, username, activeSection, onSectionChan
       return <>
         {sectionLink('dashboard', 'Overview', '⌂')}
         {sectionLink('scheduling', 'OS Scheduling', '◷')}
+        {sectionLink('records', 'Medical Records', '▤')}
       </>;
     }
     if (isPatient) {
@@ -61,6 +64,11 @@ export default function AppNavbar({ role, username, activeSection, onSectionChan
         {patientLink('booking', 'Book visit', '＋')}
         {patientLink('appointments', 'Appointments', '▤')}
       </>;
+    }
+    if (isAdmin) {
+      return <Link className="drawer-link" to="/admin-dashboard" onClick={() => setIsOpen(false)}>
+        <span className="drawer-link-icon" aria-hidden="true">⌂</span>Overview
+      </Link>;
     }
     return <>
       <Link className="drawer-link" to="/" onClick={() => setIsOpen(false)}>
@@ -92,7 +100,7 @@ export default function AppNavbar({ role, username, activeSection, onSectionChan
             <span className="account-avatar" aria-hidden="true">{initials}</span>
             <span className="account-details">
               <strong>{username || 'User'}</strong>
-              <small>{isDoctor ? 'Doctor account' : 'Patient account'}</small>
+              <small>{accountLabel}</small>
             </span>
             <button className="btn btn-secondary navbar-logout" onClick={onLogout}>Sign out</button>
           </>}
@@ -126,7 +134,7 @@ export default function AppNavbar({ role, username, activeSection, onSectionChan
             <span className="account-avatar" aria-hidden="true">{initials}</span>
             <span className="account-details">
               <strong>{username || 'User'}</strong>
-              <small>{isDoctor ? 'Doctor account' : 'Patient account'}</small>
+              <small>{accountLabel}</small>
             </span>
           </div>
         )}

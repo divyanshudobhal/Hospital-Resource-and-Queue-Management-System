@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SchedulingPanel from '../components/SchedulingPanel';
 import AppNavbar from '../components/AppNavbar';
+import MedicalRecordsPanel from '../components/MedicalRecordsPanel';
+import LiveNotifications from '../components/LiveNotifications';
 
 export default function DoctorDashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -87,12 +89,13 @@ export default function DoctorDashboard() {
         onSectionChange={setActiveTab}
         onLogout={logout}
       />
+      <LiveNotifications />
       <main className="dashboard">
       <section className="page-heading">
         <div>
           <p className="eyebrow">DOCTOR WORKSPACE</p>
-          <h1>{activeTab === 'dashboard' ? 'Clinic overview' : 'OS Scheduling'}</h1>
-          <p>{activeTab === 'dashboard' ? 'Here is what is happening with your clinic today.' : 'Compare patient queues with CPU scheduling algorithms.'}</p>
+          <h1>{activeTab === 'dashboard' ? 'Clinic overview' : activeTab === 'records' ? 'Medical records' : 'OS Scheduling'}</h1>
+          <p>{activeTab === 'dashboard' ? 'Here is what is happening with your clinic today.' : activeTab === 'records' ? 'Create and review records for your patients.' : 'Compare patient queues with CPU scheduling algorithms.'}</p>
         </div>
         <span className="today-label">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
       </section>
@@ -211,8 +214,10 @@ export default function DoctorDashboard() {
             )}
           </div>
         </>
-      ) : (
+      ) : activeTab === 'scheduling' ? (
         <SchedulingPanel appointments={appointments} />
+      ) : (
+        <MedicalRecordsPanel patients={patients} appointments={appointments} />
       )}
       </main>
     </div>

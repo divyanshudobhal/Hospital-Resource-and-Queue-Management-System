@@ -1,11 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../db');
+const { User, Doctor, Patient } = require('../db');
 
 const router = express.Router();
 
-// POST /api/auth/signup - create a patient login and profile in one transaction
+// POST /api/auth/signup - create a patient login and profile
 router.post('/signup', async (req, res) => {
   const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
   const username = typeof req.body.username === 'string' ? req.body.username.trim().toLowerCase() : '';
@@ -37,37 +37,32 @@ router.post('/signup', async (req, res) => {
     return res.status(400).json({ message: 'Choose a valid blood group.' });
   }
 
-  let connection;
+  let user;
+  let patient;
   try {
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
-
     const passwordHash = await bcrypt.hash(password, 10);
-    const [userResult] = await connection.query(
-      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, \'patient\')',
-      [username, passwordHash]
-    );
-    const [patientResult] = await connection.query(
-      `INSERT INTO patients (user_id, name, age, gender, phone, blood_group)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [userResult.insertId, name, age, gender, phone || null, bloodGroup]
-    );
+    user = await User.create({ username, password_hash: passwordHash, role: 'patient' });
+    patient = await Patient.create({
+      user_id: user._id,
+      name,
+      age: age === null ? undefined : age,
+      gender: gender || undefined,
+      phone: phone || undefined,
+      blood_group: bloodGroup || undefined
+    });
 
-    await connection.commit();
-
-    const user = { id: userResult.insertId, username, role: 'patient', profileId: patientResult.insertId };
-    const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '8h' });
+    const userPayload = { id: user.id, username, role: 'patient', profileId: patient.id };
+    const token = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '8h' });
     console.log(`  ✓ Patient account created: ${username}`);
-    res.status(201).json({ message: 'Account created successfully.', token, user });
+    res.status(201).json({ message: 'Account created successfully.', token, user: userPayload });
   } catch (err) {
-    if (connection) await connection.rollback();
-    if (err.code === 'ER_DUP_ENTRY') {
+    if (patient) await Patient.deleteOne({ _id: patient._id });
+    if (user) await User.deleteOne({ _id: user._id });
+    if (err.code === 11000) {
       return res.status(409).json({ message: 'That username is already taken.' });
     }
     console.error('  ✗ Signup error:', err.message);
     res.status(500).json({ message: 'Could not create your account. Please try again.' });
-  } finally {
-    if (connection) connection.release();
   }
 });
 
@@ -82,13 +77,10 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user by username
-    const [users] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-
-    if (users.length === 0) {
+    const user = await User.findOne({ username });
+    if (!user) {
       return res.status(401).json({ message: 'Invalid username or password.' });
     }
-
-    const user = users[0];
 
     // Compare password with bcrypt hash
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -97,13 +89,15 @@ router.post('/login', async (req, res) => {
     }
 
     // Get role-specific profile ID (doctor_id or patient_id)
-    let profileId = null;
+    let profileId;
     if (user.role === 'doctor') {
-      const [doctors] = await pool.query('SELECT id FROM doctors WHERE user_id = ?', [user.id]);
-      profileId = doctors.length > 0 ? doctors[0].id : null;
+      const doctor = await Doctor.findOne({ user_id: user._id }).select('_id');
+      profileId = doctor ? doctor.id : null;
+    } else if (user.role === 'patient') {
+      const patient = await Patient.findOne({ user_id: user._id }).select('_id');
+      profileId = patient ? patient.id : null;
     } else {
-      const [patients] = await pool.query('SELECT id FROM patients WHERE user_id = ?', [user.id]);
-      profileId = patients.length > 0 ? patients[0].id : null;
+      profileId = null;
     }
 
     // Create JWT token

@@ -1,35 +1,29 @@
 services:
-  db:
-    image: mysql:8.4
+  mongo:
+    image: mongo:7
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: hospital_management
-      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?Set MONGO_ROOT_USERNAME in .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./server/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 20s
+      start_period: 10s
 
   app:
     build: .
     restart: unless-stopped
     depends_on:
-      db:
+      mongo:
         condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 8080
-      DB_HOST: db
-      DB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
-      DB_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
-      DB_NAME: hospital_management
+      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongo:27017/hospital_management?authSource=admin
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
     ports:
       - "${APP_PORT:-8081}:8080"
@@ -51,4 +45,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  mysql_data:
+  mongo_data:

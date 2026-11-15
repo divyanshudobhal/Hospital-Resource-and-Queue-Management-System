@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import CSchedulingRunner from './CSchedulingRunner';
+import OSConceptsPanel from './OSConceptsPanel';
 /* ===== SCHEDULING ALGORITHMS ===== */
 
 // FCFS — First Come First Serve
@@ -71,14 +71,19 @@ function priorityScheduling(patients) {
   return schedule;
 }
 
-/* ===== SAMPLE DATA ===== */
-const SAMPLE_PATIENTS = [
-  { id: 'P1', name: 'Alice Johnson', arrivalTime: 0,  serviceTime: 20, priority: 2, appointmentType: 'regular' },
-  { id: 'P2', name: 'Bob Williams',  arrivalTime: 5,  serviceTime: 15, priority: 1, appointmentType: 'emergency' },
-  { id: 'P3', name: 'Charlie Brown', arrivalTime: 10, serviceTime: 25, priority: 2, appointmentType: 'regular' },
-  { id: 'P4', name: 'Diana Ross',    arrivalTime: 12, serviceTime: 10, priority: 1, appointmentType: 'emergency' },
-  { id: 'P5', name: 'Eve Davis',     arrivalTime: 20, serviceTime: 15, priority: 2, appointmentType: 'regular' },
-];
+function appointmentArrivalTimestamp(appointment) {
+  const date = String(appointment.appointment_date || '').slice(0, 10);
+  const time = String(appointment.arrival_time || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      !/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(time)) {
+    return NaN;
+  }
+  const normalizedTime = time.length === 5 ? `${time}:00` : time;
+  const timestamp = Date.parse(`${date}T${normalizedTime}Z`);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === date
+    ? timestamp
+    : NaN;
+}
 
 /* ===== GANTT CHART ===== */
 function GanttChart({ schedule, title }) {
@@ -184,36 +189,37 @@ function ResultsTable({ schedule, label }) {
 
 /* ===== MAIN PANEL ===== */
 export default function SchedulingPanel({ appointments = [] }) {
-  const [patients, setPatients] = useState(SAMPLE_PATIENTS);
-  const [useApi, setUseApi] = useState(false);
-
-  // Convert real appointments to scheduling format
-  useEffect(() => {
-    if (useApi && appointments.length > 0) {
-      const waiting = appointments.filter((a) => a.status === 'waiting');
-      if (waiting.length === 0) {
-        setPatients(SAMPLE_PATIENTS);
-        return;
-      }
-      // Convert time strings to relative minutes
-      const converted = waiting.map((a) => {
-        const parts = (a.arrival_time || '09:00').split(':').map(Number);
-        return {
-          id: `P${a.id}`,
-          name: a.patient_name,
-          arrivalTime: parts[0] * 60 + parts[1],
-          serviceTime: a.estimated_service_time || 15,
-          priority: a.priority || 2,
-          appointmentType: a.appointment_type || 'regular'
-        };
-      });
-      const minArr = Math.min(...converted.map((p) => p.arrivalTime));
-      converted.forEach((p) => (p.arrivalTime -= minArr));
-      setPatients(converted);
-    } else {
-      setPatients(SAMPLE_PATIENTS);
-    }
-  }, [useApi, appointments]);
+  const waitingAppointments = appointments
+    .filter((appointment) => appointment.status === 'waiting')
+    .sort((left, right) =>
+      String(left.appointment_date).localeCompare(String(right.appointment_date)) ||
+      String(left.arrival_time).localeCompare(String(right.arrival_time)) ||
+      String(left.id).localeCompare(String(right.id))
+    );
+  const appointmentRows = waitingAppointments.map((appointment) => ({
+    appointment,
+    arrivalTimestamp: appointmentArrivalTimestamp(appointment)
+  }));
+  const hasInvalidAppointment = appointmentRows.some(({ appointment, arrivalTimestamp }) =>
+    !Number.isFinite(arrivalTimestamp) ||
+    !Number.isInteger(appointment.estimated_service_time) ||
+    appointment.estimated_service_time < 1 ||
+    !Number.isInteger(appointment.priority) ||
+    !['emergency', 'regular'].includes(appointment.appointment_type)
+  );
+  const firstArrival = appointmentRows.length
+    ? Math.min(...appointmentRows.map((row) => row.arrivalTimestamp))
+    : 0;
+  const patients = hasInvalidAppointment
+    ? []
+    : appointmentRows.map(({ appointment, arrivalTimestamp }, index) => ({
+        id: `P${index + 1}`,
+        name: appointment.patient_name || 'Unknown patient',
+        arrivalTime: Math.floor((arrivalTimestamp - firstArrival) / 60000),
+        serviceTime: appointment.estimated_service_time,
+        priority: appointment.priority,
+        appointmentType: appointment.appointment_type
+      }));
 
   const fcfs = fcfsScheduling(patients);
   const prio = priorityScheduling(patients);
@@ -239,25 +245,28 @@ export default function SchedulingPanel({ appointments = [] }) {
           Operating Systems concepts. It does not replace actual clinical triage or medical assessment.
         </div>
 
-        {appointments.length > 0 && (
-          <label className="toggle-label">
-            <input type="checkbox" checked={useApi} onChange={(e) => setUseApi(e.target.checked)} />
-            Use actual waiting appointments as input data
-          </label>
-        )}
+        <p>Scheduling input comes from this doctor's waiting appointments in the database.</p>
       </div>
 
       {/* Input Data */}
       <div className="card">
         <h3>📋 Patient Queue (Input)</h3>
         <p>Priority: 1 = Emergency (higher), 2 = Regular (lower). Lower number = scheduled first.</p>
-        <div className="table-wrapper">
-          <table className="data-table">
+        {hasInvalidAppointment ? (
+          <p role="alert" className="alert alert-error">
+            A waiting appointment has invalid date, arrival time, service duration, priority, or type data.
+            Fix its database record before scheduling.
+          </p>
+        ) : patients.length === 0 ? (
+          <p className="empty">No waiting appointments found in the database.</p>
+        ) : (
+          <div className="table-wrapper">
+            <table className="data-table">
             <thead>
               <tr>
                 <th>ID</th>
                 <th>Patient</th>
-                <th>Arrival (min)</th>
+                <th>Arrival (min from first check-in)</th>
                 <th>Service (min)</th>
                 <th>Type</th>
                 <th>Priority</th>
@@ -279,8 +288,9 @@ export default function SchedulingPanel({ appointments = [] }) {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* FCFS */}
@@ -339,7 +349,8 @@ export default function SchedulingPanel({ appointments = [] }) {
           </table>
         </div>
       </div>
-   <CSchedulingRunner />
+      <CSchedulingRunner appointments={waitingAppointments} />
+      <OSConceptsPanel />
     </div>
     
   );

@@ -1,64 +1,31 @@
 
 import { useState } from 'react';
 
-const API = 'http://localhost:5000/api/os-scheduling';
+const API = '/api/os-scheduling';
 
-const initialProcesses = [
-  { arrival: 0, burst: 6, priority: 3 },
-  { arrival: 1, burst: 2, priority: 1 },
-  { arrival: 2, burst: 1, priority: 2 },
-];
-
-export default function CSchedulingRunner() {
+export default function CSchedulingRunner({ appointments = [] }) {
   const [algorithm, setAlgorithm] = useState('fcfs');
-  const [processes, setProcesses] = useState(initialProcesses);
+  const [quantum, setQuantum] = useState(2);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  function updateProcess(index, field, value) {
-    setProcesses((current) =>
-      current.map((p, i) =>
-        i === index ? { ...p, [field]: value } : p
-      )
-    );
-  }
-
-  function addProcess() {
-    if (processes.length >= 100) return;
-
-    setProcesses((current) => [
-      ...current,
-      { arrival: 0, burst: 1, priority: 2 },
-    ]);
-    setResult(null);
-  }
-
-  function removeProcess(index) {
-    setProcesses((current) => current.filter((_, i) => i !== index));
-    setResult(null);
-  }
+  const waitingCount = appointments.filter((appointment) => appointment.status === 'waiting').length;
 
   async function runSimulation() {
     setLoading(true);
     setError('');
     setResult(null);
 
-    const payload = {
-      processes: processes.map((p) => ({
-        arrival: Number(p.arrival),
-        burst: Number(p.burst),
-        ...(algorithm === 'priority'
-          ? { priority: Number(p.priority) }
-          : {}),
-      })),
-    };
+    const token = localStorage.getItem('token');
 
     try {
       const response = await fetch(`${API}/${algorithm}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(algorithm === 'round-robin' ? { quantum: Number(quantum) } : {}),
       });
 
       const data = await response.json();
@@ -82,8 +49,8 @@ export default function CSchedulingRunner() {
     <section className="card c-scheduling-runner">
       <h2>C-Based CPU Scheduling</h2>
       <p>
-        These simulations execute the compiled C programs through the
-        Node.js backend.
+        Each run loads your current waiting appointments from the database and
+        executes the selected C scheduler through the backend.
       </p>
 
       <label htmlFor="c-algorithm">Scheduling algorithm</label>
@@ -98,95 +65,32 @@ export default function CSchedulingRunner() {
       >
         <option value="fcfs">FCFS</option>
         <option value="priority">Non-preemptive Priority</option>
+        <option value="sjf">Non-preemptive SJF</option>
+        <option value="round-robin">Round Robin</option>
+        <option value="multilevel">Multilevel Queue</option>
       </select>
 
-      <h3>Process inputs</h3>
-      <p>
-        Lower priority numbers mean higher priority. Arrival and burst times
-        must be whole numbers; burst time must be greater than zero.
-      </p>
+      <p>{waitingCount} waiting appointment{waitingCount === 1 ? '' : 's'} loaded for this doctor.</p>
+      {algorithm === 'round-robin' && (
+        <label htmlFor="round-robin-quantum">
+          Time quantum
+          <input
+            id="round-robin-quantum"
+            type="number"
+            min="1"
+            max="1000000"
+            step="1"
+            value={quantum}
+            onChange={(event) => setQuantum(event.target.value)}
+          />
+        </label>
+      )}
 
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Process</th>
-              <th>Arrival</th>
-              <th>Burst</th>
-              {algorithm === 'priority' && <th>Priority</th>}
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {processes.map((p, index) => (
-              <tr key={index}>
-                <td>P{index + 1}</td>
-                <td>
-                  <input
-                    aria-label={`P${index + 1} arrival time`}
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={p.arrival}
-                    onChange={(e) =>
-                      updateProcess(index, 'arrival', e.target.value)
-                    }
-                  />
-                </td>
-                <td>
-                  <input
-                    aria-label={`P${index + 1} burst time`}
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={p.burst}
-                    onChange={(e) =>
-                      updateProcess(index, 'burst', e.target.value)
-                    }
-                  />
-                </td>
-                {algorithm === 'priority' && (
-                  <td>
-                    <input
-                      aria-label={`P${index + 1} priority`}
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={p.priority}
-                      onChange={(e) =>
-                        updateProcess(index, 'priority', e.target.value)
-                      }
-                    />
-                  </td>
-                )}
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => removeProcess(index)}
-                    disabled={processes.length === 1}
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-        <button
-          type="button"
-          onClick={addProcess}
-          disabled={processes.length >= 100}
-        >
-          + Add Process
-        </button>
-
+      <div style={{ marginTop: '16px' }}>
         <button
           type="button"
           onClick={runSimulation}
-          disabled={loading || processes.length === 0}
+          disabled={loading}
         >
           {loading ? 'Running C program...' : 'Run C Simulation'}
         </button>

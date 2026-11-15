@@ -34,7 +34,9 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(data.user));
 
       // Redirect based on role
-      if (data.user.role === 'doctor') {
+      if (data.user.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (data.user.role === 'doctor') {
         navigate('/doctor-dashboard');
       } else {
         navigate('/patient-dashboard');
@@ -94,6 +96,7 @@ export default function Login() {
           <div className="demo-info">
             <p><strong>Demo Accounts</strong> (password: <code>password123</code>)</p>
             <div className="demo-accounts">
+              <span className="demo-role">Admin:</span> admin<br />
               <span className="demo-role">Doctors:</span> dr.aarav (Dr. Aarav Sharma) &nbsp;|&nbsp; dr.priya (Dr. Priya Iyer)<br />
               <span className="demo-role">Patients:</span> pulkit &nbsp;|&nbsp; swastika &nbsp;|&nbsp; srishti
             </div>

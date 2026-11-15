@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar';
+import LiveNotifications from '../components/LiveNotifications';
 
 export default function PatientDashboard() {
   const [profile, setProfile] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [records, setRecords] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
@@ -35,14 +37,16 @@ export default function PatientDashboard() {
   async function fetchData() {
     setLoading(true);
     try {
-      const [profileRes, apptRes, docRes] = await Promise.all([
+      const [profileRes, apptRes, docRes, recordsRes] = await Promise.all([
         fetch('/api/patients/profile', { headers: authHeaders }),
         fetch('/api/appointments', { headers: authHeaders }),
-        fetch('/api/appointments/doctors', { headers: authHeaders })
+        fetch('/api/appointments/doctors', { headers: authHeaders }),
+        fetch('/api/medical-records', { headers: authHeaders })
       ]);
 
       if (profileRes.ok) setProfile(await profileRes.json());
       if (apptRes.ok) setAppointments(await apptRes.json());
+      if (recordsRes.ok) setRecords(await recordsRes.json());
       if (docRes.ok) {
         const docList = await docRes.json();
         setDoctors(docList);
@@ -107,6 +111,7 @@ export default function PatientDashboard() {
   return (
     <div className="dashboard-shell">
       <AppNavbar role="patient" username={user.username} onLogout={logout} />
+      <LiveNotifications />
       <main className="dashboard">
       <section className="page-heading">
         <div>
@@ -134,6 +139,32 @@ export default function PatientDashboard() {
             </div>
           )}
 
+          <div className="card">
+            <h2>🩺 My Medical Records</h2>
+            {records.length === 0 ? (
+              <p className="empty">No medical records are available.</p>
+            ) : (
+              <div className="table-wrapper">
+                <table className="data-table">
+                  <thead>
+                    <tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Treatment</th><th>Notes</th></tr>
+                  </thead>
+                  <tbody>
+                    {records.map((record) => (
+                      <tr key={record.id}>
+                        <td>{new Date(record.created_at).toLocaleDateString()}</td>
+                        <td>{record.doctor_name}</td>
+                        <td>{record.diagnosis}</td>
+                        <td>{record.treatment || '—'}</td>
+                        <td>{record.notes || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {/* Book Appointment */}
           <div className="card" id="booking">
             <h2>📅 Book Appointment</h2>
@@ -156,7 +187,7 @@ export default function PatientDashboard() {
                 <label>Doctor</label>
                 <select
                   value={form.doctor_id}
-                  onChange={(e) => setForm({ ...form, doctor_id: Number(e.target.value) })}
+                  onChange={(e) => setForm({ ...form, doctor_id: e.target.value })}
                   required
                 >
                   {doctors.map((d) => (

@@ -28,7 +28,7 @@ Copy-Item deploy\hosting.env.example .env
 notepad .env
 ```
 
-In Notepad, replace each `replace-with-...` value with a different, long random secret, then save and close the file. For a temporary link, leave `CLOUDFLARE_TUNNEL_TOKEN` blank.
+In Notepad, replace each `replace-with-...` value with a different, long random secret, then save and close the file. Use only letters and numbers in `MONGO_ROOT_PASSWORD` because Docker Compose inserts it into the MongoDB URI. For a temporary link, leave `CLOUDFLARE_TUNNEL_TOKEN` blank.
 
 Keep `.env` private. It contains database passwords and the app's signing key; add a tunnel token only if you set up a stable hostname. Do not commit or share this file.
 
@@ -39,12 +39,12 @@ docker compose up --build -d
 docker compose ps
 ```
 
-The first build may take a few minutes. Wait until the `db` service is healthy and `app` is running, then open:
+The first build may take a few minutes. Wait until the `mongo` service is healthy and `app` is running, then open:
 
 - App: <http://localhost:8081>
 - Health check: <http://localhost:8081/api/health>
 
-The database and demo records are initialized the first time the database volume is created. The volume keeps your data when you stop or rebuild the containers.
+MongoDB and the demo records are initialized when the app first starts. The MongoDB volume keeps your data when you stop or rebuild the containers.
 
 ## Open the app on your phone
 
@@ -85,7 +85,7 @@ View service status and logs:
 ```powershell
 docker compose ps
 docker compose logs --tail 100 app
-docker compose logs --tail 100 db
+docker compose logs --tail 100 mongo
 ```
 
 Update the app after changing or downloading newer code:
@@ -106,7 +106,7 @@ Start the local app again with `docker compose up -d`. For a tunnel, also start 
 ## Troubleshooting
 
 - **Docker cannot connect:** Open Docker Desktop and wait until it reports that Docker is running.
-- **The app does not open:** Run `docker compose ps` and `docker compose logs --tail 100 app`. If the database is still starting, check `docker compose logs --tail 100 db`.
+- **The app does not open:** Run `docker compose ps` and `docker compose logs --tail 100 app`. If MongoDB is still starting, check `docker compose logs --tail 100 mongo`.
 - **Port 8081 is already in use:** Change `APP_PORT=8081` in `.env` to another free port, then restart with `docker compose up -d`.
 - **Your phone cannot open `localhost`:** `localhost` on the phone means the phone itself. Use the temporary tunnel URL or your stable hostname instead.
 - **No temporary URL appears:** Run `docker compose logs -f cloudflared` and wait for the `.trycloudflare.com` address.
@@ -119,6 +119,7 @@ Start the local app again with `docker compose up -d`. For a tunnel, also start 
 |------|----------|----------|
 | Doctor | `dr.aarav` (Dr. Aarav Sharma) | `password123` |
 | Doctor | `dr.priya` (Dr. Priya Iyer) | `password123` |
+| Admin | `admin` | `password123` |
 | Patient | `pulkit` | `password123` |
 | Patient | `swastika` | `password123` |
 | Patient | `srishti` | `password123` |

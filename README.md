@@ -1,39 +1,36 @@
 # 🏥 Hospital Management System
 
-A college project demonstrating **Operating Systems (CPU Scheduling)** and **Database Management Systems (MySQL)** concepts through a hospital patient scheduling and management application.
+A college project demonstrating **Operating Systems (CPU Scheduling)** and **Database Management Systems (MongoDB)** concepts through a hospital patient scheduling and management application.
 
-Built with **React.js**, **Node.js**, **Express.js**, and **MySQL**.
+Built with **React.js**, **Node.js**, **Express.js**, and **MongoDB**.
 
 ---
 
-## 📋 Features (Milestone 1 — 40%)
+## 📋 Project Features
 
 ### ✅ Completed
 
 | # | Feature | Description |
 |---|---------|-------------|
-| 1 | **Login & Role-Based Access** | JWT authentication with Doctor and Patient roles |
-| 2 | **Doctor Dashboard** | View patients, today's appointments, stats cards |
-| 3 | **Patient Dashboard** | Profile, book appointments, appointment history |
+| 1 | **Login & Role-Based Access** | JWT authentication with Admin, Doctor, and Patient roles |
+| 2 | **Doctor Dashboard** | Patient, appointment, scheduling, and medical record views |
+| 3 | **Patient Dashboard** | Profile, booking, appointment history, and own medical records |
 | 4 | **Appointment Booking** | Patients book appointments with selected doctor |
 | 5 | **Emergency & Regular Classification** | Appointments marked as Emergency (priority 1) or Regular (priority 2) |
-| 6 | **FCFS Scheduling** | First Come First Serve algorithm with Gantt chart |
-| 7 | **Priority Scheduling** | Non-preemptive priority scheduling with Gantt chart |
-| 8 | **Gantt Chart & Calculations** | Visual Gantt chart, waiting time, turnaround time |
-| 9 | **MySQL Integration** | Users, doctors, patients, appointments tables with JOINs |
-| 10 | **Terminal-Based Backend** | Express server with request logging in VS Code terminal |
+| 6 | **CPU Scheduling** | FCFS, non-preemptive Priority, SJF, Round Robin, and Multilevel Queue |
+| 7 | **Scheduling Results** | Completion, waiting, and turnaround times plus execution order |
+| 8 | **C Scheduler Demo** | Run compiled C schedulers from the doctor dashboard; results appear in the page and backend terminal |
+| 9 | **MongoDB Integration** | Users, doctors, patients, appointments, and medical records |
+| 10 | **OS Resource Demos** | Resource allocation, Banker’s deadlock avoidance, mutex, and semaphore |
 
-### 🔲 Pending (Future Milestones)
+### ✅ Completed Milestones
 
-- Round Robin scheduling algorithm
-- Shortest Job First (SJF) scheduling
-- Multilevel Queue Scheduling
-- Advanced DB concepts (views, stored procedures, triggers)
-- Deadlock detection and prevention simulation
-- Process synchronization (mutex/semaphore) demonstration
-- Admin dashboard
-- Real-time notifications
-- Patient medical records
+- Five CPU scheduling algorithms exposed through compiled C programs
+- Resource allocation, deadlock avoidance, and process synchronization simulations
+- Role-protected administrator dashboard
+- Live appointment notifications
+- Patient medical records with doctor and patient access controls
+- MongoDB view, aggregation, and Mongoose middleware demonstrations
 
 ---
 
@@ -43,8 +40,9 @@ Built with **React.js**, **Node.js**, **Express.js**, and **MySQL**.
 |-------|------------|
 | Frontend | React.js 18, React Router v6, Vite |
 | Backend | Node.js, Express.js |
-| Database | MySQL |
+| Database | MongoDB with Mongoose |
 | Auth | JWT (jsonwebtoken), bcryptjs |
+| Notifications | Server-Sent Events |
 | Styling | Custom CSS (blue & white theme) |
 
 ---
@@ -53,18 +51,14 @@ Built with **React.js**, **Node.js**, **Express.js**, and **MySQL**.
 
 ### Prerequisites
 
-- **Node.js** (v16 or higher)
-- **MySQL** (v8 or higher) running locally
+- **Node.js** (v16.20 or higher)
+- **MongoDB** (v6 or higher) running locally
+- **GCC** for local C scheduler builds (Docker builds the C programs automatically)
 - **VS Code** with a terminal
 
-### Step 1: Set Up the Database
+### Step 1: Start MongoDB
 
-```bash
-# Open MySQL and run the schema
-mysql -u root -p < server/schema.sql
-```
-
-Or open MySQL Workbench, copy the contents of `server/schema.sql`, and execute.
+Start MongoDB locally and use the default database URI `mongodb://127.0.0.1:27017/hospital_management`, or set `MONGODB_URI` in `server/.env` to your MongoDB connection string. The application creates its collections and indexes when it starts.
 
 ### Step 2: Configure the Backend
 
@@ -74,8 +68,8 @@ cd server
 # Create .env file from the example
 copy .env.example .env
 
-# Edit .env and set your MySQL password
-# DB_PASSWORD=your_mysql_password
+# Replace JWT_SECRET with a long random value. Set MONGODB_URI if needed.
+# MONGODB_URI=mongodb://127.0.0.1:27017/hospital_management
 
 # Install dependencies
 npm install
@@ -90,7 +84,7 @@ You should see:
   ║   Hospital Management System — Backend Server ║
   ╚═══════════════════════════════════════════════╝
   Server  : http://localhost:5000
-  ✓  MySQL connected
+  ✓  MongoDB connected
   ✓  Demo data seeded successfully!
 ```
 
@@ -106,6 +100,22 @@ npm run dev
 
 Open **http://localhost:5173** in your browser.
 
+### Demonstrate the C scheduler
+
+Sign in as a doctor, open **OS CPU Scheduling Simulation**, and scroll to **C-Based CPU Scheduling**. The schedulers load that doctor's waiting appointments directly from MongoDB; patient name, arrival time, service duration, appointment type, and priority are not entered manually or replaced by sample processes. Choose an algorithm (and a time quantum for Round Robin) to run it. The backend runs the C program, prints its output in the backend terminal, and returns the results to the page. Local first-use compilation requires GCC; Docker builds the executables into the image.
+
+When running locally on Windows, compile the C executables from the project root if needed:
+
+```powershell
+gcc -std=c11 -Wall -Wextra os_engine\fcfs.c -o os_engine\fcfs.exe
+gcc -std=c11 -Wall -Wextra os_engine\non_preemptive_priority.c -o os_engine\priority.exe
+gcc -std=c11 -Wall -Wextra os_engine\sjf.c -o os_engine\sjf.exe
+gcc -std=c11 -Wall -Wextra os_engine\round_robin.c -o os_engine\round_robin.exe
+gcc -std=c11 -Wall -Wextra os_engine\multilevel_queue.c -o os_engine\multilevel_queue.exe
+```
+
+The Docker image compiles platform-native scheduler executables automatically.
+
 ---
 
 ## 🌐 Hosting
@@ -118,6 +128,8 @@ For the complete step-by-step instructions to run the app locally, share a tempo
 |------|----------|----------|
 | Doctor | `dr.aarav` (Dr. Aarav Sharma) | `password123` |
 | Doctor | `dr.priya` (Dr. Priya Iyer) | `password123` |
+| Admin | `admin` | `password123` |
+| Admin | `admin` | `password123` |
 | Patient | `pulkit` | `password123` |
 | Patient | `swastika` | `password123` |
 | Patient | `srishti` | `password123` |
@@ -133,11 +145,15 @@ hospital-management-system/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── ProtectedRoute.jsx   # Route guard (role check)
-│   │   │   └── SchedulingPanel.jsx  # OS scheduling simulation
+│   │   │   ├── SchedulingPanel.jsx  # OS scheduling and simulation demos
+│   │   │   ├── CSchedulingRunner.jsx
+│   │   │   ├── MedicalRecordsPanel.jsx
+│   │   │   └── LiveNotifications.jsx
 │   │   ├── pages/
 │   │   │   ├── Login.jsx            # Login page
 │   │   │   ├── DoctorDashboard.jsx  # Doctor view
-│   │   │   └── PatientDashboard.jsx # Patient view
+│   │   │   ├── PatientDashboard.jsx # Patient view
+│   │   │   └── AdminDashboard.jsx   # Administrator view
 │   │   ├── App.jsx                  # Routes
 │   │   ├── main.jsx                 # Entry point
 │   │   └── index.css                # Blue & white theme
@@ -152,8 +168,7 @@ hospital-management-system/
 │   │   ├── patients.js              # GET /api/patients
 │   │   └── appointments.js          # CRUD appointments
 │   ├── server.js                    # Express entry + seed
-│   ├── db.js                        # MySQL connection pool
-│   ├── schema.sql                   # Database schema
+│   ├── db.js                        # MongoDB connection and Mongoose models
 │   ├── .env.example                 # Environment template
 │   └── package.json
 └── README.md
@@ -187,6 +202,15 @@ Each patient appointment is treated as a **process**:
 - Once a consultation starts, it completes before the next
 - Reduces emergency wait times
 
+### 3. Non-Preemptive SJF
+- Chooses the shortest burst time among processes that have arrived.
+
+### 4. Round Robin
+- Shares CPU time in a configurable quantum and requeues unfinished processes.
+
+### 5. Multilevel Queue
+- Queue 0 is emergency/high priority; queue 1 is regular. Each queue is FCFS.
+
 ### Gantt Chart
 - Visual timeline of scheduling order
 - Shows idle periods when no patient has arrived
@@ -198,15 +222,16 @@ Each patient appointment is treated as a **process**:
 
 | Concept | Implementation |
 |---------|---------------|
-| **Tables & Schema** | users, doctors, patients, appointments |
-| **Primary Keys** | AUTO_INCREMENT id on each table |
-| **Foreign Keys** | patient_id → patients, doctor_id → doctors |
-| **JOINs** | Appointment queries join patients and doctors |
-| **Parameterized Queries** | All SQL uses `?` placeholders (prevents SQL injection) |
-| **Transactions** | Appointment booking uses BEGIN/COMMIT to prevent duplicates |
-| **Indexes** | On appointment_date, doctor_id, patient_id, status |
-| **ENUMs** | role, gender, appointment_type, status |
-| **Constraints** | NOT NULL, UNIQUE, CHECK |
+| **Collections & Schema** | users, doctors, patients, appointments, medical_records |
+| **Document IDs** | MongoDB ObjectIds |
+| **References** | `patient_id`, `doctor_id`, and `user_id` reference related documents |
+| **Population** | Appointment queries populate patient and doctor details |
+| **Indexes** | Unique usernames and user profile references |
+| **Validation** | Mongoose required fields and enum validation |
+| **MongoDB View** | `appointment_queue_view` joins appointment, patient, and doctor collections |
+| **Aggregation** | Dashboard status/type counts use an aggregation pipeline |
+| **Trigger Equivalent** | Mongoose validation middleware derives priority from appointment type |
+| **Stored Procedure Equivalent** | Reusable server-side aggregation functions; MongoDB has no SQL stored procedures |
 
 ---
 
@@ -215,12 +240,21 @@ Each patient appointment is treated as a **process**:
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
 | POST | `/api/auth/login` | — | — | Login, returns JWT |
+| POST | `/api/auth/signup` | — | — | Create a patient account |
 | GET | `/api/patients` | ✅ | Doctor | List all patients |
 | GET | `/api/patients/profile` | ✅ | Patient | Get own profile |
 | GET | `/api/appointments` | ✅ | Both | Get appointments (filtered by role) |
 | POST | `/api/appointments` | ✅ | Patient | Book appointment |
 | PATCH | `/api/appointments/:id/status` | ✅ | Doctor | Update appointment status |
 | GET | `/api/appointments/doctors` | ✅ | Both | List doctors for booking |
+| GET | `/api/admin/overview` | ✅ | Admin | Hospital statistics and appointment aggregates |
+| GET | `/api/admin/users` | ✅ | Admin | Account directory (password hashes excluded) |
+| GET | `/api/admin/database-demo` | ✅ | Admin | MongoDB view and aggregation results |
+| GET/POST | `/api/medical-records` | ✅ | Doctor/Patient | Create and view authorized medical records |
+| GET | `/api/notifications/stream` | ✅ | All roles | Server-Sent Events for appointment and record updates |
+| POST | `/api/os-concepts/resources` | ✅ | Doctor | Resource allocation/release simulation |
+| POST | `/api/os-concepts/deadlock` | ✅ | Doctor | Banker’s safe-state check |
+| POST | `/api/os-concepts/synchronization` | ✅ | Doctor | Mutex/semaphore timeline simulation |
 | GET | `/api/health` | — | — | Health check |
 
 ---
@@ -235,65 +269,13 @@ This is an **educational project** for demonstrating OS and DBMS concepts. The s
 
 This project is for educational purposes only.
 
-docker compose --profile tunnel up -d --force-recreate cloudflared
-docker compose logs -f cloudflared
-
-# update 18/10/2026
-## Operating System (OS) Module
-
-The Hospital Resource and Queue Management System demonstrates core Operating System concepts through hospital resource management and process scheduling simulations.
-
-### 1. CPU Scheduling Algorithms in C
-
-Implemented and tested two CPU scheduling algorithms in C:
-
-- **First Come First Serve (FCFS):** Processes are scheduled based on arrival time.
-- **Non-Preemptive Priority Scheduling:** The process with the highest priority among the waiting processes executes first. A lower priority number indicates higher priority.
-
-**Scheduling metrics calculated:**
-- Completion Time (CT)
-- Waiting Time (WT)
-- Turnaround Time (TAT)
-- Average Waiting Time
-- Average Turnaround Time
-- Gantt execution order
-
-**Source files:**
-- `os_engine/fcfs.c`
-- `os_engine/non_preemptive_priority.c`
-
-### 2. Resource Allocation Simulation
-
-The C++ resource simulator models hospital resources such as general beds, ICU beds, and ventilators. It processes allocation requests, checks resource availability, denies requests when insufficient resources are available, and supports resource release.
-
-Source file: `os_engine/resource_simulator.cpp`
-
-### 3. Process Synchronization
-
-The synchronization module demonstrates how mutexes and semaphores coordinate concurrent patient requests for limited ICU beds.
-
-Source files:
-- `os_engine/resource_sync.cpp`
-- `os_engine/semaphore_sim.cpp`
-
-### 4. Scheduling API Integration
-
-The Node.js backend exposes API endpoints that execute the compiled C scheduling programs and return their output to the client.
-
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/os-scheduling/fcfs` | Executes the C FCFS scheduler |
-| POST | `/api/os-scheduling/priority` | Executes the C non-preemptive Priority scheduler |
-
-Backend route: `server/routes/osScheduling.js`
-
 ### Technology Stack
 
 - **C:** FCFS and Non-Preemptive Priority Scheduling
 - **C++:** Resource allocation and synchronization simulations
 - **React.js:** Frontend interface
 - **Node.js and Express.js:** Backend API
-- **MySQL:** Persistent application data
+- **MongoDB:** Persistent application data
 
 ### Compile and Run the C Scheduling Programs
 
@@ -329,5 +311,5 @@ Both programs accept process details interactively and display scheduling metric
 
 - FCFS C program: compiled and tested.
 - Non-Preemptive Priority C program: compiled and tested with multiple processes and different arrival times.
-- Scheduling API endpoints: tested successfully using `curl`.
-- React integration of the C scheduling runner: pending browser verification.
+- Scheduling API executes the C programs and returns their terminal output to the React runner.
+- The React runner uses the same-origin API, so it works in Vite development and Docker-hosted builds.
