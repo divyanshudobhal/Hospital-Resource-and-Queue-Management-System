@@ -4,10 +4,10 @@
 int main() {
     char names[100][50];
     int n, beds = 20, served = 0;
-    printf("Kitne patients? ");
+    printf("Number of patients? ");
     scanf("%d", &n);
     for(int i=0;i<n;i++){
-        printf("Patient %d ka naam: ", i+1);
+        printf("Patient name %d: ", i+1);
         scanf("%s", names[i]);
     }
     printf("\n--- FCFS Order ---\n");
